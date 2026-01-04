@@ -5,12 +5,38 @@ const base = new Airtable({ apiKey: config.airtable.apiKey }).base(config.airtab
 
 const mapRecord = (record) => ({ id: record.id, ...record.fields });
 
-export const listRecords = async (table, { filterByFormula, sort, pageSize = 20, offset } = {}) => {
-  const records = await base(table)
-    .select({ filterByFormula, sort, pageSize, offset })
-    .firstPage();
+export const listRecords = async (
+  table,
+  { filterByFormula, sort, pageSize = 20, offset } = {}
+) => {
+  const selectOptions = {};
+
+  // Solo incluir si es string no vacía
+  if (typeof filterByFormula === "string" && filterByFormula.trim() !== "") {
+    selectOptions.filterByFormula = filterByFormula;
+  }
+
+  // sort si viene bien formado
+  if (Array.isArray(sort) && sort.length) {
+    selectOptions.sort = sort;
+  }
+
+  // pageSize como número
+  if (pageSize !== undefined && pageSize !== null) {
+    const ps = Number(pageSize);
+    if (Number.isFinite(ps)) selectOptions.pageSize = ps;
+  }
+
+  // offset: inclúyelo solo si existe (y si es numérico conviértelo)
+  if (offset !== undefined && offset !== null && offset !== "") {
+    const offNum = Number(offset);
+    selectOptions.offset = Number.isFinite(offNum) ? offNum : offset;
+  }
+
+  const records = await base(table).select(selectOptions).firstPage();
   return records.map(mapRecord);
 };
+
 
 export const getRecord = async (table, recordId) => {
   const record = await base(table).find(recordId);

@@ -3,9 +3,21 @@ import { createRecord, listRecords, updateRecord } from '../services/airtable.se
 
 const buildFilter = (query) => {
   const filters = [];
-  if (query.search) {
-    filters.push(`OR(FIND('${query.search}', nombre), FIND('${query.search}', email), FIND('${query.search}', telefono))`);
-  }
+ 
+  const escapeAirtable = (v) => String(v).replace(/'/g, "\\'");
+
+if (query.search) {
+  const s = escapeAirtable(query.search);
+  filters.push(
+    `OR(` +
+      `FIND('${s}', {nombre}),` +
+      `FIND('${s}', {email}),` +
+      `FIND('${s}', {telefono})` +
+    `)`
+  );
+}
+
+
   if (query.estado_lead) filters.push(`{estado_lead} = '${query.estado_lead}'`);
   if (query.intencion) filters.push(`{intencion} = '${query.intencion}'`);
   if (query.canal) filters.push(`{canal} = '${query.canal}'`);
